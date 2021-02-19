@@ -222,14 +222,38 @@ https://blog.newrelic.com/product-news/aws-lambda-extensions-integrations/
       await this.configureLicenseForExtension();
     }
 
+    // xray enabled? DT should be off, to avoid duplicating traces/spans.
+    if (this.config.enableXRay) {
+      this.config.enableDistributedTracing = false;
+    }
+
     // before adding layer, attach secret access policy
     // to each function's execution role:
     const resources = this.resources;
+
+    const xRayPolicy = {
+      Action: ["xray:PutTraceSegments", "xray:PutTelemetryRecords"],
+      Effect: "Allow",
+      Resource: "*"
+    };
+
     Object.keys(resources)
       .filter(resourceName => resources[resourceName].Type === `AWS::IAM::Role`)
-      .forEach(roleResource =>
-        this.applyPolicies(resources[roleResource].Properties)
-      );
+      .forEach(roleResource => {
+        this.applyPolicies(resources[roleResource].Properties);
+        if (this.config.enableXRay) {
+          let policyStatement = _.get(
+            resources[roleResource],
+            "Properties.Policies[0].PolicyDocument.Statement",
+            []
+          );
+          policyStatement = [...policyStatement, xRayPolicy];
+          resources[
+            roleResource
+          ].Properties.Policies[0].PolicyDocument.Statement = policyStatement;
+        }
+        return;
+      });
 
     const funcs = this.functions;
     const promises = [];

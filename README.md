@@ -126,6 +126,10 @@ custom:
 
 Enables logging. Defaults to `false`
 
+#### `enableDistributedTracing` (optional)
+
+Enables New Relic Distributed Tracing. If defined, this is converted to `true`. If XRay is enabled, this will be removed. 
+
 #### `enableExtension` (optional)
 
 Allows your function to deliver its telemetry to New Relic via AWS Lambda Extension. Defaults to `true`, so it can be omitted. To avoid delivering your telemetry via the extension, set to `false`.
@@ -154,6 +158,9 @@ custom:
   newRelic:
     enableIntegration: true
 ```
+#### `enableXRay` (optional)
+
+This adds an IAM policy statement to your function execution role allowing it to write traces and telemetry to AWS X-Ray. We recommend this for Lambda functions that are going to be used as part of a step function. If Distributed Tracing is also enabled, X-Ray will take precedence, and Distributed Tracing will be disabled, to avoid duplication. (Note that writing traces/telemetry to X-Ray will incur additional AWS costs.)  
 
 #### `logLevel` (optional)
 
